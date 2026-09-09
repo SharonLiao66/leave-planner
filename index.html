@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>年度排休規劃表</title>
+<style>
+  :root{ --radius:8px; }
+  /* 米白綠（預設） */
+  body[data-theme="sage"]{
+    --bg:#faf9f5; --surface:#ffffff; --line:#e5e3db; --line2:#d0cec4;
+    --text:#26251f; --muted:#78766c; --hint:#a3a196;
+    --accent:#3b6d3b; --accent-bg:#eaf3e4;
+    --danger:#a32d2d; --danger-bg:#fcebeb;
+  }
+  /* 藍色系 */
+  body[data-theme="blue"]{
+    --bg:#f5f8fc; --surface:#ffffff; --line:#e0e7f0; --line2:#c6d4e6;
+    --text:#1c2733; --muted:#5c6b7d; --hint:#94a3b5;
+    --accent:#2563a8; --accent-bg:#e3eefb;
+    --danger:#b3372e; --danger-bg:#fceceb;
+  }
+  /* 暖橘/紅棕 */
+  body[data-theme="amber"]{
+    --bg:#fbf7f2; --surface:#ffffff; --line:#ece2d6; --line2:#dcc9b4;
+    --text:#2b2018; --muted:#7d6b5a; --hint:#b0a08d;
+    --accent:#b3541e; --accent-bg:#f7e8da;
+    --danger:#a32d2d; --danger-bg:#fcebeb;
+  }
+  /* 粉紫 */
+  body[data-theme="rose"]{
+    --bg:#fcf6f8; --surface:#ffffff; --line:#f0e2e8; --line2:#e3c8d3;
+    --text:#2c1f26; --muted:#7f6570; --hint:#b298a2;
+    --accent:#a83b6d; --accent-bg:#fbe6ee;
+    --danger:#b3372e; --danger-bg:#fceceb;
+  }
+  /* 純白 */
+  body[data-theme="white"]{
+    --bg:#ffffff; --surface:#fafafa; --line:#ececec; --line2:#dcdcdc;
+    --text:#1f1f1f; --muted:#6b6b6b; --hint:#a0a0a0;
+    --accent:#374151; --accent-bg:#f1f3f5;
+    --danger:#c0392b; --danger-bg:#fbeceb;
+  }
+  /* 深色 */
+  body[data-theme="dark"]{
+    --bg:#1a1b1e; --surface:#26282c; --line:#34373c; --line2:#43464c;
+    --text:#e6e5e1; --muted:#a0a09a; --hint:#6f7178;
+    --accent:#7fb87f; --accent-bg:#2c3a2c;
+    --danger:#e88; --danger-bg:#3a2626;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,"Segoe UI","PingFang TC","Microsoft JhengHei",sans-serif;
+    line-height:1.6; padding:24px 16px 64px;
+  }
+  .wrap{max-width:860px; margin:0 auto;}
+  header{display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-bottom:20px;}
+  h1{font-size:22px; font-weight:600; margin:0; display:flex; align-items:baseline; gap:8px;}
+  h1 input{
+    width:5em; font-size:22px; font-weight:600; text-align:center;
+    border:none; border-bottom:2px solid var(--line2); background:transparent;
+    color:var(--accent); font-family:inherit; padding:0 2px;
+  }
+  h1 input:focus{outline:none; border-bottom-color:var(--accent);}
+  #year-label{color:var(--accent); min-width:3em; display:inline-block; text-align:center;}
+  .yr-nav{font-size:16px; padding:2px 10px; border-radius:var(--radius); color:var(--accent); border-color:var(--line2);}
+  .yr-nav:hover{background:var(--accent-bg);}
+  .palette{display:flex; gap:6px; align-items:center;}
+  .nostore-banner{background:var(--danger-bg); color:var(--danger); border:1px solid var(--danger); border-radius:var(--radius); padding:10px 14px; font-size:13px; line-height:1.6; margin-bottom:16px;}
+  .sw{width:22px; height:22px; border-radius:50%; cursor:pointer; border:2px solid var(--line2); padding:0; position:relative;}
+  .sw:hover{transform:scale(1.12);}
+  .sw.on{border-color:var(--text); box-shadow:0 0 0 2px var(--surface),0 0 0 3px var(--text);}
+  .spacer{flex:1;}
+  button{
+    font-family:inherit; font-size:14px; color:var(--text);
+    background:var(--surface); border:1px solid var(--line2);
+    border-radius:var(--radius); padding:7px 14px; cursor:pointer;
+  }
+  button:hover{background:var(--bg);}
+  button.primary{background:var(--accent); color:#fff; border-color:var(--accent);}
+  button.primary:hover{opacity:.9;}
+  button.ghost{border-color:transparent; color:var(--muted); padding:6px 8px;}
+  button.ghost:hover{background:var(--line);}
+
+  .stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:12px; margin-bottom:20px;}
+  .stat{background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:12px 16px;}
+  .stat .lb{font-size:13px; color:var(--muted); margin:0 0 4px;}
+  .stat .val{font-size:26px; font-weight:600; margin:0;}
+  .stat .val.over{color:var(--danger);}
+  .cyc-range{font-size:11px; color:var(--hint); font-weight:400;}
+
+  .cfg{background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:12px 16px; margin-bottom:20px; display:flex; flex-wrap:wrap; gap:16px 24px; align-items:center;}
+  .cfg label{font-size:14px; color:var(--muted); display:flex; align-items:center; gap:8px;}
+  .cfg input[type=number]{width:56px; height:32px; text-align:center; font-size:14px; font-family:inherit; border:1px solid var(--line2); border-radius:var(--radius); background:var(--surface); color:var(--text);}
+
+  table{width:100%; border-collapse:collapse; background:var(--surface); border:1px solid var(--line); border-radius:12px; overflow:hidden;}
+  thead th{font-size:12px; color:var(--muted); font-weight:600; text-align:center; padding:10px 6px; background:var(--bg); border-bottom:1px solid var(--line);}
+  thead th:first-child{text-align:left; padding-left:14px;}
+  tbody td{padding:8px 6px; border-bottom:1px solid var(--line); vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  .mth{font-weight:600; font-size:15px; padding-left:14px; white-space:nowrap;}
+  .mth.pre-reset{color:var(--accent);}
+  .reset-flag{display:inline-block; font-size:11px; font-weight:400; color:var(--accent); background:var(--accent-bg); border-radius:4px; padding:1px 6px; margin-left:4px; vertical-align:1px;}
+  .num{width:52px; height:32px; text-align:center; font-size:15px; font-family:inherit; border:1px solid var(--line2); border-radius:var(--radius); background:var(--surface); color:var(--text);}
+  .num:focus{outline:none; border-color:var(--accent);}
+  .detail{width:100%; min-width:180px; font-size:13px; font-family:inherit; border:1px solid transparent; border-radius:var(--radius); background:transparent; color:var(--muted); padding:6px 8px;}
+  .detail:hover{border-color:var(--line);}
+  .detail:focus{outline:none; border-color:var(--accent); background:var(--surface); color:var(--text);}
+  td.c{text-align:center;}
+  .tot{font-weight:600; font-size:15px;}
+  .tot.over{color:var(--danger);}
+  .fixed{font-size:15px; color:var(--muted);}
+  .nen-na{color:var(--hint); font-size:15px;}
+  .rowdel{color:var(--hint); font-size:18px; line-height:1;}
+  .rowdel:hover{color:var(--danger); background:var(--danger-bg);}
+
+  .warn{font-size:13px; color:var(--muted); margin-top:14px; padding:10px 14px; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);}
+  .warn.bad{color:var(--danger); background:var(--danger-bg); border-color:#f0c9c9;}
+  .foot{font-size:12px; color:var(--hint); margin-top:16px; line-height:1.7;}
+  .toolbar{display:flex; flex-wrap:wrap; gap:8px; margin-top:16px;}
+  .sht{display:none;}
+  .lng{display:inline;}
+  @media (max-width:600px){
+    body{padding:14px 8px 48px;}
+    h1{font-size:18px; gap:6px; flex-wrap:wrap;}
+    .yr-nav{padding:2px 8px;}
+    header{gap:8px; margin-bottom:14px;}
+    .palette{gap:5px;}
+    .sw{width:26px; height:26px;}   /* 手機上放大好點按 */
+
+    /* 統計卡改兩欄 */
+    .stats{grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px;}
+    .stat{padding:10px 12px; border-radius:10px;}
+    .stat .lb{font-size:11px;}
+    .stat .val{font-size:21px;}
+
+    /* 設定區改直排、緊湊 */
+    .cfg{padding:12px; gap:10px 14px; border-radius:10px; margin-bottom:14px;}
+    .cfg label{font-size:13px;}
+
+    /* 表格：縮小內距與字級，讓 7 欄塞得下 */
+    table{font-size:13px;}
+    thead th{padding:8px 2px; font-size:11px;}
+    thead th:first-child{padding-left:8px;}
+    tbody td{padding:6px 2px;}
+    .mth{font-size:13px; padding-left:8px;}
+    .reset-flag{display:block; margin:2px 0 0; font-size:9px; padding:0 4px;}
+    .fixed,.nen-na,.tot{font-size:13px;}
+    .num{width:38px; height:34px; font-size:14px; padding:0 2px;}
+    .detail{min-width:0; font-size:11px; padding:5px 4px; line-height:1.35;}
+    .lng{display:none;}
+    .sht{display:inline;}
+  }
+  @media print{
+    body{background:#fff; padding:0;}
+    button,.toolbar,.cfg .add,.rowdel,.yr-nav,.palette{display:none!important;}
+    .stat,.cfg,table,.warn{border-color:#ccc;}
+  }
+</style>
+</head>
+<body data-theme="sage">
+<div class="wrap">
+  <header>
+    <h1>
+      <button class="yr-nav" onclick="switchYear(-1)" title="上一年">◀</button>
+      <span id="year-label">2026</span>
+      <button class="yr-nav" onclick="switchYear(1)" title="下一年">▶</button>
+      年度排休規劃表
+    </h1>
+    <span class="spacer"></span>
+    <div class="palette" id="palette"></div>
+    <button onclick="window.print()">列印</button>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><p class="lb">上期特休 已休 / 總額 <span class="cyc-range" id="cyc-range"></span></p><p class="val" id="s-cyc">0</p></div>
+    <div class="stat"><p class="lb">上期特休 剩餘未休</p><p class="val" id="s-remain">0</p></div>
+    <div class="stat"><p class="lb">全年休假合計</p><p class="val" id="s-all">0</p></div>
+  </div>
+
+  <div class="cfg">
+    <label>每月例假固定 7 天</label>
+    <label>每月休假上限 <input id="cfg-limit" type="number" min="0" value="15"> 天</label>
+    <label>年假總額 <input id="cfg-nen" type="number" min="0" value="5"> 天</label>
+    <label>年假須於 3 月底前休完</label>
+    <label>特休重置日 <input id="cfg-reset" type="text" placeholder="10/5" style="width:64px"></label>
+    <label>上期特休總額 <input id="cfg-carry" type="number" min="0" value="14" style="width:56px"> 天</label>
+    <label>上期已休(去年重置後) <input id="cfg-prevused" type="number" min="0" value="0" style="width:56px"> 天</label>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>月份</th>
+        <th><span class="lng">例假</span><span class="sht">例</span></th>
+        <th><span class="lng">國定</span><span class="sht">國</span></th>
+        <th><span class="lng">國定假日說明</span><span class="sht">國定假日</span></th>
+        <th><span class="lng">特休</span><span class="sht">特</span></th>
+        <th><span class="lng">年假</span><span class="sht">年</span></th>
+        <th><span class="lng">合計</span><span class="sht">計</span></th>
+      </tr>
+    </thead>
+    <tbody id="body"></tbody>
+  </table>
+
+  <div class="warn" id="warn"></div>
+
+  <div class="toolbar">
+    <button class="primary" onclick="save()">儲存</button>
+    <button onclick="exportJSON()">匯出備份</button>
+    <button onclick="document.getElementById('imp').click()">匯入備份</button>
+    <button onclick="resetAll()">重設為預設</button>
+    <input id="imp" type="file" accept="application/json" style="display:none" onchange="importJSON(this)">
+  </div>
+
+  <p class="foot">
+    用標題左右的 ◀ ▶ 可切換年度（已內建 2026、2027，也能往後新增其他年份，各年資料獨立儲存）。月份固定 1～12 月；國定假日天數與說明可直接點擊修改。<br>
+    「上期特休總額」是上一週期核發、須在重置日前休完的天數；「上期已休」是去年重置日後（例如去年10~12月）已休掉的天數。剩餘未休 ＝ 總額 − 去年已休 − 今年重置前已排；只要不等於 0 就會紅字提醒。<br>
+    所有年度都自動存在這台裝置的瀏覽器中。「匯出備份」會一次備份全部年度；「重設為預設」只會重設目前顯示的年度。<br>
+    <span style="color:var(--hint)">※ 2027 國定假日日期依行政院人事行政總處公告；春節 2/4~2/10、端午 6/9、中秋 9/15，可自行再核對。</span>
+  </p>
+</div>
+
+<script>
+const KEY='leave-planner-v2';
+const THEME_KEY='leave-planner-theme';
+
+const THEMES=[
+  {id:'sage',  name:'米白綠', color:'#3b6d3b'},
+  {id:'blue',  name:'藍色',   color:'#2563a8'},
+  {id:'amber', name:'暖橘',   color:'#b3541e'},
+  {id:'rose',  name:'粉紫',   color:'#a83b6d'},
+  {id:'white', name:'純白',   color:'#ffffff'},
+  {id:'dark',  name:'深色',   color:'#26282c'}
+];
+function applyTheme(id){
+  document.body.setAttribute('data-theme',id);
+  document.querySelectorAll('.sw').forEach(s=>s.classList.toggle('on', s.dataset.theme===id));
+  lsSet(THEME_KEY,id);
+}
+function buildPalette(){
+  const pal=document.getElementById('palette');
+  THEMES.forEach(t=>{
+    const b=document.createElement('button');
+    b.className='sw'; b.dataset.theme=t.id; b.title=t.name;
+    b.style.background=t.color;
+    b.onclick=()=>applyTheme(t.id);
+    pal.appendChild(b);
+  });
+  const saved=lsGet(THEME_KEY)||'sage';
+  applyTheme(saved);
+}
+
+function makeYear(over){
+  return Object.assign({
+    rei:7, limit:15, nen:5, nenDeadline:3, resetDate:"", carry:0, prevUsed:0,
+    rows:[]
+  }, over);
+}
+
+// 各年度預設內容
+const PRESETS={
+  2026:{
+    rei:7, limit:15, nen:5, nenDeadline:3, resetDate:"10/5", carry:14, prevUsed:4,
+    rows:[
+      {m:1, koku:1, detail:"01/01 開國紀念日", t:0, n:2},
+      {m:2, koku:1, detail:"02/28 和平紀念日", t:0, n:1},
+      {m:3, koku:0, detail:"—", t:2, n:2},
+      {m:4, koku:2, detail:"04/04 兒童節 · 04/05 掃墓節", t:0, n:0},
+      {m:5, koku:1, detail:"05/01 勞動節", t:3, n:0},
+      {m:6, koku:1, detail:"06/19 端午節", t:1, n:0},
+      {m:7, koku:0, detail:"—", t:2, n:0},
+      {m:8, koku:0, detail:"—", t:2, n:0},
+      {m:9, koku:2, detail:"09/25 中秋 · 09/28 教師節", t:0, n:0},
+      {m:10, koku:2, detail:"10/10 國慶 · 10/25 光復節", t:5, n:0},
+      {m:11, koku:0, detail:"—", t:0, n:0},
+      {m:12, koku:1, detail:"12/25 行憲紀念日", t:0, n:0}
+    ]
+  },
+  2027:{
+    rei:7, limit:15, nen:5, nenDeadline:3, resetDate:"10/5", carry:0, prevUsed:0,
+    rows:[
+      {m:1, koku:1, detail:"01/01 開國紀念日", t:0, n:0},
+      {m:2, koku:6, detail:"02/04~10 春節(含小年夜、除夕) · 02/28 和平紀念日", t:0, n:0},
+      {m:3, koku:0, detail:"—", t:0, n:0},
+      {m:4, koku:2, detail:"04/04 兒童節 · 04/05 清明節(4/6補假)", t:0, n:0},
+      {m:5, koku:1, detail:"05/01 勞動節", t:0, n:0},
+      {m:6, koku:1, detail:"06/09 端午節", t:0, n:0},
+      {m:7, koku:0, detail:"—", t:0, n:0},
+      {m:8, koku:0, detail:"—", t:0, n:0},
+      {m:9, koku:2, detail:"09/15 中秋 · 09/28 教師節", t:0, n:0},
+      {m:10, koku:2, detail:"10/10 國慶 · 10/25 光復節", t:0, n:0},
+      {m:11, koku:0, detail:"—", t:0, n:0},
+      {m:12, koku:1, detail:"12/25 行憲紀念日", t:0, n:0}
+    ]
+  }
+};
+
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+
+function defaultFor(year){
+  if(PRESETS[year]) return clone(PRESETS[year]);
+  // 未知年度：以 2027 骨架複製，特休、年假清空
+  const base=clone(PRESETS[2027]);
+  base.carry=0; base.prevUsed=0;
+  base.rows.forEach(r=>{r.t=0; r.n=0;});
+  return base;
+}
+
+// store: { currentYear, years:{ 2026:{...}, 2027:{...} } }
+let store;
+let state; // 目前年度的資料（= store.years[currentYear]）
+
+// localStorage 安全封裝：檔案App/無痕/舊瀏覽器可能完全不支援
+let storageOK=true;
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ storageOK=false; return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){ storageOK=false; } }
+
+function freshStore(){
+  return { currentYear:2026, years:{ 2026:defaultFor(2026), 2027:defaultFor(2027) } };
+}
+function loadStore(){
+  store=null;
+  try{
+    const raw=lsGet(KEY);
+    if(raw){ const p=JSON.parse(raw); if(p && p.years) store=p; }
+  }catch(e){ store=null; }
+  if(!store || !store.years || !Object.keys(store.years).length){
+    store=freshStore();
+  }
+  if(!store.currentYear) store.currentYear=2026;
+  bindState();
+}
+function bindState(){
+  const y=store.currentYear;
+  if(!store.years[y]) store.years[y]=defaultFor(y);
+  state=store.years[y];
+}
+function persist(){ lsSet(KEY, JSON.stringify(store)); }
+
+function switchYear(delta){
+  store.currentYear = (+store.currentYear||2026) + delta;
+  bindState(); persist(); render();
+}
+
+function render(){
+  document.getElementById('year-label').textContent=store.currentYear;
+  document.getElementById('cfg-limit').value=state.limit;
+  document.getElementById('cfg-nen').value=state.nen;
+  document.getElementById('cfg-reset').value=state.resetDate||'';
+  document.getElementById('cfg-carry').value=state.carry||0;
+  document.getElementById('cfg-prevused').value=state.prevUsed||0;
+  ensureTwelve();
+  const body=document.getElementById('body');
+  body.innerHTML='';
+  const deadline=state.nenDeadline||3;
+  const resetM=resetMonth();
+  state.rows.forEach((r,i)=>{
+    const tr=document.createElement('tr');
+    const allowNen = r.m<=deadline;
+    if(!allowNen) r.n=0;
+    const nenCell = allowNen
+      ? `<td class="c" data-nen><input class="num" type="number" min="0" value="${r.n}" data-f="n"></td>`
+      : `<td class="c nen-na">—</td>`;
+    const beforeReset = resetM && r.m < resetM;
+    const mthTag = beforeReset ? `<span class="reset-flag" title="特休重置前，請把舊特休休完">重置前</span>` : '';
+    tr.innerHTML=`
+      <td class="mth ${beforeReset?'pre-reset':''}">${r.m}月 ${mthTag}</td>
+      <td class="c fixed">${state.rei}</td>
+      <td class="c"><input class="num" type="number" min="0" value="${r.koku}" data-f="koku"></td>
+      <td><input class="detail" type="text" value="${escapeHtml(r.detail)}" data-f="detail" placeholder="國定假日說明"></td>
+      <td class="c"><input class="num" type="number" min="0" value="${r.t}" data-f="t"></td>
+      ${nenCell}
+      <td class="c tot" data-tot>0</td>`;
+    tr.querySelectorAll('[data-f]').forEach(inp=>{
+      inp.addEventListener('input',()=>{
+        const f=inp.dataset.f;
+        state.rows[i][f]= f==='detail'? inp.value : Math.max(0,Math.round(+inp.value||0));
+        recalc(); persist();
+      });
+    });
+    body.appendChild(tr);
+  });
+  recalc();
+}
+
+function resetMonth(){
+  const d=state.resetDate;
+  if(!d) return 0;
+  const parts=String(d).split(/[\/\-]/).map(x=>+x);
+  return parts[0]>=1 && parts[0]<=12 ? parts[0] : 0;
+}
+function ensureTwelve(){
+  if(!state.rows) state.rows=[];
+  const byM={};
+  state.rows.forEach(r=>{ if(r.m>=1&&r.m<=12) byM[r.m]=r; });
+  const full=[];
+  for(let m=1;m<=12;m++){
+    full.push(byM[m] || {m, koku:0, detail:"—", t:0, n:0});
+  }
+  state.rows=full;
+}
+
+function recalc(){
+  const rei=state.rei, limit=state.limit;
+  let sumT=0,sumN=0,sumAll=0,over=0,warns=[];
+  const resetM=resetMonth();
+  let preResetT=0;
+  const rows=document.querySelectorAll('#body tr');
+  rows.forEach((tr,i)=>{
+    const r=state.rows[i];
+    const tot=rei + (r.koku||0) + (r.t||0) + (r.n||0);
+    const cell=tr.querySelector('[data-tot]');
+    cell.textContent=tot;
+    cell.classList.toggle('over',tot>limit);
+    if(tot>limit){over++; warns.push(`${r.m}月合計 ${tot} 天，超出上限 ${tot-limit} 天`);}
+    if(resetM && r.m<resetM) preResetT += r.t||0;
+    sumT+=r.t||0; sumN+=r.n||0; sumAll+=tot;
+  });
+  set('s-all',sumAll);
+
+  const carryTotal = Math.max(0,Math.round(+state.carry||0));
+  const prevUsed = Math.max(0,Math.round(+state.prevUsed||0));
+  const cycEl=document.getElementById('s-cyc');
+  const remainEl=document.getElementById('s-remain');
+  const rangeEl=document.getElementById('cyc-range');
+  if(resetM){
+    const used = prevUsed + preResetT;
+    const remain = carryTotal - used;
+    cycEl.textContent = `${used} / ${carryTotal}`;
+    cycEl.classList.toggle('over', used>carryTotal);
+    remainEl.textContent = remain;
+    remainEl.classList.toggle('over', remain!==0);
+    rangeEl.textContent = `（${state.resetDate} 前）`;
+    cycEl.title = `去年重置後已休 ${prevUsed} + 今年重置前 ${preResetT}`;
+  }else{
+    cycEl.textContent='—';
+    remainEl.textContent='—';
+    rangeEl.textContent='（請先設定重置日）';
+  }
+
+  let w=warns.slice();
+  if(sumN>state.nen) w.unshift(`年假共排 ${sumN} 天，超過 ${state.nen} 天`);
+  else if(sumN<state.nen) w.unshift(`年假還有 ${state.nen-sumN} 天未排`);
+  let carryLate=false;
+  if(resetM){
+    const used = prevUsed + preResetT;
+    const remain = carryTotal - used;
+    carryLate = remain!==0;
+    if(remain>0) w.unshift(`上期特休 ${carryTotal} 天，已休 ${used} 天（去年 ${prevUsed} + 今年 ${preResetT}），還有 ${remain} 天要在 ${state.resetDate} 前休完！`);
+    else if(remain<0) w.unshift(`上期特休 ${carryTotal} 天，但已排 ${used} 天，超出 ${-remain} 天`);
+    else w.unshift(`上期特休 ${carryTotal} 天已在 ${state.resetDate} 前休完 ✓`);
+  }
+  const warnEl=document.getElementById('warn');
+  if(w.length && (over>0 || sumN>state.nen || carryLate)){
+    warnEl.className='warn bad'; warnEl.textContent='⚠ '+w.join('　·　');
+  }else if(w.length){
+    warnEl.className='warn'; warnEl.textContent='• '+w.join('　·　');
+  }else{
+    warnEl.className='warn'; warnEl.textContent='✓ 各月皆在上限內，年假已排滿';
+  }
+}
+
+function set(id,v){document.getElementById(id).textContent=v;}
+function escapeHtml(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+['limit','nen'].forEach(k=>{
+  document.getElementById('cfg-'+k).addEventListener('input',e=>{
+    state[k]=Math.max(0,Math.round(+e.target.value||0)); persist(); render();
+  });
+});
+document.getElementById('cfg-reset').addEventListener('input',e=>{
+  state.resetDate=e.target.value.trim(); persist(); render();
+});
+document.getElementById('cfg-carry').addEventListener('input',e=>{
+  state.carry=Math.max(0,Math.round(+e.target.value||0)); persist(); render();
+});
+document.getElementById('cfg-prevused').addEventListener('input',e=>{
+  state.prevUsed=Math.max(0,Math.round(+e.target.value||0)); persist(); render();
+});
+
+function save(){ persist(); flash('已儲存'); }
+function resetAll(){
+  const y=store.currentYear;
+  if(confirm(`確定要把 ${y} 年重設為預設內容嗎？該年目前的修改會被覆蓋。`)){
+    store.years[y]=defaultFor(y); bindState(); persist(); render();
+  }
+}
+function exportJSON(){
+  const blob=new Blob([JSON.stringify(store,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`排休規劃_全部年度.json`;
+  a.click();
+}
+function importJSON(input){
+  const file=input.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const data=JSON.parse(reader.result);
+      if(data.years){            // 新版全年度備份
+        store=data; if(!store.currentYear) store.currentYear=2026;
+      }else if(data.rows){       // 舊版單一年度備份，併入目前年度
+        store.years[store.currentYear]=data;
+      }else throw 0;
+      bindState(); persist(); render(); flash('已匯入');
+    }catch(e){ alert('檔案格式不正確'); }
+    input.value='';
+  };
+  reader.readAsText(file);
+}
+function flash(msg){
+  const el=document.getElementById('warn');
+  const prev=el.textContent, cls=el.className;
+  el.className='warn'; el.textContent='✓ '+msg;
+  setTimeout(()=>{el.className=cls; el.textContent=prev;},1200);
+}
+
+function initApp(){
+  try{
+    buildPalette();
+  }catch(e){ document.body.setAttribute('data-theme','sage'); }
+  try{
+    loadStore();
+    render();
+  }catch(e){
+    // 極端情況：仍強制以預設呈現
+    store=freshStore(); bindState();
+    try{ render(); }catch(_){}
+  }
+  if(!storageOK){
+    const banner=document.createElement('div');
+    banner.className='nostore-banner';
+    banner.textContent='⚠ 目前開啟方式無法自動儲存（可能用「檔案」App 或無痕模式）。內容可正常編輯與列印，但關閉不會記住——建議改用 Safari／Chrome 開啟，或用「匯出備份」保存。';
+    const wrap=document.querySelector('.wrap');
+    if(wrap) wrap.insertBefore(banner, wrap.firstChild.nextSibling);
+  }
+}
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded', initApp);
+}else{
+  initApp();
+}
+</script>
+</body>
+</html>
