@@ -119,6 +119,39 @@
   .warn.bad{color:var(--danger); background:var(--danger-bg); border-color:#f0c9c9;}
   .foot{font-size:12px; color:var(--hint); margin-top:16px; line-height:1.7;}
   .toolbar{display:flex; flex-wrap:wrap; gap:8px; margin-top:16px;}
+  .sht{display:none;}
+  .lng{display:inline;}
+  @media (max-width:600px){
+    body{padding:14px 8px 48px;}
+    h1{font-size:18px; gap:6px; flex-wrap:wrap;}
+    .yr-nav{padding:2px 8px;}
+    header{gap:8px; margin-bottom:14px;}
+    .palette{gap:5px;}
+    .sw{width:26px; height:26px;}   /* 手機上放大好點按 */
+
+    /* 統計卡改兩欄 */
+    .stats{grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px;}
+    .stat{padding:10px 12px; border-radius:10px;}
+    .stat .lb{font-size:11px;}
+    .stat .val{font-size:21px;}
+
+    /* 設定區改直排、緊湊 */
+    .cfg{padding:12px; gap:10px 14px; border-radius:10px; margin-bottom:14px;}
+    .cfg label{font-size:13px;}
+
+    /* 表格：縮小內距與字級，讓 7 欄塞得下 */
+    table{font-size:13px;}
+    thead th{padding:8px 2px; font-size:11px;}
+    thead th:first-child{padding-left:8px;}
+    tbody td{padding:6px 2px;}
+    .mth{font-size:13px; padding-left:8px;}
+    .reset-flag{display:block; margin:2px 0 0; font-size:9px; padding:0 4px;}
+    .fixed,.nen-na,.tot{font-size:13px;}
+    .num{width:38px; height:34px; font-size:14px; padding:0 2px;}
+    .detail{min-width:0; font-size:11px; padding:5px 4px; line-height:1.35;}
+    .lng{display:none;}
+    .sht{display:inline;}
+  }
   @media print{
     body{background:#fff; padding:0;}
     button,.toolbar,.cfg .add,.rowdel,.yr-nav,.palette{display:none!important;}
@@ -159,8 +192,13 @@
   <table>
     <thead>
       <tr>
-        <th>月份</th><th>例假</th><th>國定</th>
-        <th>國定假日說明</th><th>特休</th><th>年假</th><th>合計</th>
+        <th>月份</th>
+        <th><span class="lng">例假</span><span class="sht">例</span></th>
+        <th><span class="lng">國定</span><span class="sht">國</span></th>
+        <th><span class="lng">國定假日說明</span><span class="sht">國定假日</span></th>
+        <th><span class="lng">特休</span><span class="sht">特</span></th>
+        <th><span class="lng">年假</span><span class="sht">年</span></th>
+        <th><span class="lng">合計</span><span class="sht">計</span></th>
       </tr>
     </thead>
     <tbody id="body"></tbody>
